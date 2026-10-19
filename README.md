@@ -1,169 +1,99 @@
-# FkySaharat Portfolio
+# Saharat Diewtrakul — Portfolio & Blog
 
-A personal portfolio website built with Astro and deployed to GitHub Pages.
+[![CI](https://github.com/FkySaharat/FkySaharat.github.io/actions/workflows/ci.yml/badge.svg)](https://github.com/FkySaharat/FkySaharat.github.io/actions/workflows/ci.yml)
 
----
+Personal portfolio and blog of a software engineer working with C# and SQL.
 
-## Part 1: Create GitHub Web Page
+**Live site:** https://fkysaharat.github.io
 
-### What is GitHub Pages?
+## Tech stack
 
-GitHub Pages is a free hosting service that lets you host static websites directly from a GitHub repository. It's perfect for portfolios, documentation, and blogs.
+- **[Astro 7](https://astro.build)**, static output with zero client-side JavaScript
+- **Content collections** with Zod schemas: posts and projects are type-checked Markdown
+- **Plain scoped CSS** with design tokens (CSS variables), no CSS framework
+- **TypeScript** in strict mode, checked by `astro check`
+- **GitHub Actions** verifies every push and pull request, and deploys `main` to GitHub Pages
 
-### Prerequisites
+## Features
 
-- GitHub account
-- Git installed locally
+- Home page with intro, skill cards, project cards, and latest posts
+- Blog with a card-grid index, per-post pages, tags, and draft support
+- SEO basics: per-page title/description, canonical URL, Open Graph tags
+- Single config file for all personal info (`src/site.config.ts`)
 
-### Steps to Create GitHub Web Page
+## Getting started
 
-1. **Create a new repository**
-   - Repository name: `<username>.github.io` (e.g., `FkySaharat.github.io`)
-   - This naming convention is required for user/organization pages
-   - Make it public so GitHub Pages can publish it
+Requires Node.js ≥ 22.12.
 
-2. **Clone the repository**
-   ```sh
-   git clone https://github.com/<username>/<username>.github.io.git
-   cd <username>.github.io
-   ```
-
-3. **Configure GitHub Pages**
-   - Go to Settings → Pages
-   - Source: Deploy from a branch
-   - Branch: Select `main` (or your default branch)
-   - Folder: `/root` or `/docs` depending on your setup
-   - Your site will be published at `https://<username>.github.io`
-
-4. **Add content and push**
-   ```sh
-   git add .
-   git commit -m "Initial commit"
-   git push origin main
-   ```
-
-Your website is now live! 🎉
-
----
-
-## Part 2: Initialize Astro
-
-### What is Astro?
-
-Astro is a modern static site builder that creates fast, optimized websites. It supports multiple frameworks (React, Vue, Svelte, etc.) or plain HTML.
-
-### Prerequisites
-
-- Node.js 22.12.0 or higher
-- npm (comes with Node.js)
-
-### Steps to Initialize Astro
-
-1. **Create Astro project**
-   ```sh
-   npm create astro@latest . -- --template minimal --yes
-   ```
-
-2. **Configure for GitHub Pages**
-   
-   **`astro.config.mjs`:**
-   ```javascript
-   export default defineConfig({
-     site: 'https://<username>.github.io',
-     output: 'static',
-   });
-   ```
-
-   **`package.json`:**
-   ```json
-   {
-     "scripts": {
-       "dev": "astro dev",
-       "build": "astro build",
-       "preview": "astro preview",
-       "deploy": "npm run build"
-     }
-   }
-   ```
-
-3. **Install dependencies**
-   ```sh
-   npm install
-   ```
-
-4. **Test the setup**
-   ```sh
-   npm run dev
-   ```
-   Visit `http://localhost:4321` to see your site.
-
-5. **Build for production**
-   ```sh
-   npm run build
-   ```
-   This creates an optimized `dist/` folder ready for deployment.
-
----
-
-## 🚀 Project Structure
-
-```text
-/
-├── public/
-│   └── favicon.svg
-├── src/
-│   ├── assets/
-│   │   └── astro.svg
-│   ├── components/
-│   │   └── Welcome.astro
-│   ├── layouts/
-│   │   └── Layout.astro
-│   └── pages/
-│       └── index.astro
-├── astro.config.mjs
-├── package.json
-└── tsconfig.json
+```sh
+npm install
+npm run dev        # http://localhost:4321
 ```
 
-For more details, see the [Astro project structure guide](https://docs.astro.build/en/basics/project-structure/).
+| Command | Action |
+| --- | --- |
+| `npm run dev` | Start the local dev server |
+| `npm run check` | Type check (`astro check`) |
+| `npm run build` | Build the production site to `dist/` |
+| `npm run verify` | Type check + build (what CI runs) |
+| `npm run preview` | Preview the production build locally |
 
+## Writing content
+
+**Blog post:** add `src/content/blog/my-post.md`. It's published at `/blog/my-post/`.
+
+```md
+---
+title: 'My post'
+description: 'One-line summary shown on the card.'
+pubDate: 2026-10-20
+tags: ['csharp', 'sql']
+draft: false # true = hidden
 ---
 
-## 🧞 Available Commands
+Post content in Markdown…
+```
 
-All commands are run from the root of the project:
+**Project:** copy `src/content/projects/example-project.md`, fill it in, and remove `draft: true`.
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run deploy`          | Build for production                             |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+**Personal info, social links, skills:** edit `src/site.config.ts`.
 
----
+Frontmatter is validated against `src/content.config.ts`, so a missing or mistyped field fails the build with a clear error.
 
-## 📦 Deployment to GitHub Pages
+## Project structure
 
-1. **Build the site**
-   ```sh
-   npm run build
-   ```
+```text
+├── .github/workflows/ci.yml   # CI: npm run verify on push / PR
+├── .claude/settings.json      # AI agent permissions (see below)
+├── public/                    # Static files served as-is (favicon)
+├── src/
+│   ├── components/            # Header, Icon, PostList (blog cards), FormattedDate
+│   ├── content/
+│   │   ├── blog/              # Blog posts (Markdown)
+│   │   └── projects/          # Portfolio projects (Markdown)
+│   ├── layouts/Layout.astro   # Page shell, design tokens, shared card styles
+│   ├── lib/content.ts         # getPublishedPosts() / getPublishedProjects()
+│   ├── pages/
+│   │   ├── index.astro        # Home
+│   │   └── blog/              # /blog/ index + /blog/<slug>/ post pages
+│   ├── content.config.ts      # Frontmatter schemas
+│   └── site.config.ts         # Personal info, experience, skills, education
+├── AGENTS.md                  # Instructions for AI coding agents
+└── astro.config.mjs
+```
 
-2. **Deploy to GitHub Pages**
-   - Option A: GitHub Actions (recommended - automate deployments)
-   - Option B: Manual - commit the `dist/` folder to a `gh-pages` branch
+## Working with AI agents
 
-3. **Verify deployment**
-   - Check Settings → Pages to see deployment status
-   - Visit `https://<username>.github.io` to see your live site
+This repo is set up so coding agents (Claude Code, Codex, Copilot, …) can work in it safely:
 
----
+- **`AGENTS.md`** covers the project map, conventions, and rules (for example: no hardcoded personal info, no new dependencies without asking). `CLAUDE.md` imports it.
+- **`npm run verify`** is the definition of done: agents must pass it before reporting a task as finished.
+- **`.claude/settings.json`** pre-approves the safe build/check commands and blocks edits to generated folders (`dist/`, `.astro/`, `node_modules/`).
+- **CI** runs the same `verify` command, so nothing an agent (or human) breaks can be merged silently.
 
-## 👀 Want to learn more?
+## Deployment
 
-- [Astro Documentation](https://docs.astro.build)
-- [GitHub Pages Documentation](https://docs.github.com/en/pages)
-- [Astro Discord Community](https://astro.build/chat)
+Every push to `main` runs `npm run verify` and, if it passes, deploys `dist/` to GitHub Pages
+(`.github/workflows/ci.yml`). Pull requests are verified but never deployed.
+
+One-time setup: in the GitHub repo, go to **Settings → Pages → Source** and choose **GitHub Actions**.

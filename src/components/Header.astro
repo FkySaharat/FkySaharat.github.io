@@ -1,0 +1,65 @@
+---
+import { SITE } from '../site.config';
+
+const path = Astro.url.pathname;
+const links = [
+	{ href: '/', label: 'Home', active: path === '/' },
+	{ href: '/blog/', label: 'Blog', active: path === '/blog' || path.startsWith('/blog/') },
+];
+---
+
+<header>
+	<nav>
+		<a href="/" class="brand">{SITE.name}</a>
+		<ul>
+			{
+				links.map((link) => (
+					<li>
+						<a href={link.href} class:list={{ active: link.active }} aria-current={link.active ? 'page' : undefined}>
+							{link.label}
+						</a>
+					</li>
+				))
+			}
+		</ul>
+	</nav>
+</header>
+
+<style>
+	header {
+		border-bottom: 1px solid var(--border);
+	}
+
+	nav {
+		max-width: 720px;
+		margin: 0 auto;
+		padding: 20px 24px;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+
+	.brand {
+		font-weight: 700;
+		color: var(--text);
+		text-decoration: none;
+	}
+
+	ul {
+		display: flex;
+		gap: 24px;
+		list-style: none;
+	}
+
+	ul a {
+		color: var(--muted);
+		text-decoration: none;
+		font-size: 15px;
+		font-weight: 500;
+	}
+
+	ul a:hover,
+	ul a.active {
+		color: var(--text);
+	}
+</style>

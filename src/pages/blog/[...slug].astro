@@ -1,0 +1,190 @@
+---
+import { render } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import FormattedDate from '../../components/FormattedDate.astro';
+import { getPublishedPosts } from '../../lib/content';
+import { pageTitle } from '../../site.config';
+
+export async function getStaticPaths() {
+	const posts = await getPublishedPosts();
+	return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+const { title, description, pubDate, updatedDate, tags, lang } = post.data;
+---
+
+<Layout
+	title={pageTitle(title)}
+	description={description}
+	lang={lang}
+	article={{ publishedTime: pubDate, modifiedTime: updatedDate, tags }}
+>
+	<article>
+		<header>
+			<h1>{title}</h1>
+			<p class="meta">
+				<FormattedDate date={pubDate} />
+				{
+					updatedDate && (
+						<span>
+							· Updated <FormattedDate date={updatedDate} />
+						</span>
+					)
+				}
+			</p>
+			{
+				tags.length > 0 && (
+					<ul class="tag-list tags">
+						{tags.map((tag) => (
+							<li>{tag}</li>
+						))}
+					</ul>
+				)
+			}
+		</header>
+		<div class="prose">
+			<Content />
+		</div>
+	</article>
+	<a href="/blog/" class="back">← All posts</a>
+</Layout>
+
+<style>
+	header {
+		margin-bottom: 40px;
+	}
+
+	h1 {
+		font-size: 40px;
+		line-height: 1.2;
+		letter-spacing: -0.02em;
+		margin-bottom: 12px;
+	}
+
+	.meta {
+		color: var(--muted);
+		font-size: 14px;
+	}
+
+	.tags {
+		margin-top: 12px;
+	}
+
+	.back {
+		display: inline-block;
+		margin-top: 56px;
+		color: var(--muted);
+		text-decoration: none;
+		font-size: 15px;
+	}
+
+	.back:hover {
+		color: var(--text);
+	}
+
+	/* Styles for rendered Markdown (not scoped by Astro, so use :global) */
+	.prose :global(h2) {
+		font-size: 26px;
+		margin: 40px 0 12px;
+	}
+
+	.prose :global(h3) {
+		font-size: 20px;
+		margin: 32px 0 8px;
+	}
+
+	.prose :global(p),
+	.prose :global(ul),
+	.prose :global(ol),
+	.prose :global(pre),
+	.prose :global(blockquote) {
+		margin-bottom: 20px;
+	}
+
+	.prose :global(ul),
+	.prose :global(ol) {
+		padding-left: 24px;
+	}
+
+	.prose :global(a) {
+		color: var(--accent);
+	}
+
+	.prose :global(code) {
+		font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+		font-size: 0.9em;
+	}
+
+	.prose :global(:not(pre) > code) {
+		background: var(--surface);
+		padding: 2px 6px;
+		border-radius: 4px;
+	}
+
+	.prose :global(pre) {
+		padding: 16px;
+		border-radius: 8px;
+		overflow-x: auto;
+		font-size: 14px;
+	}
+
+	.prose :global(blockquote) {
+		border-left: 3px solid var(--border);
+		padding-left: 16px;
+		color: var(--muted);
+	}
+
+	.prose :global(table) {
+		width: 100%;
+		border-collapse: separate;
+		border-spacing: 0;
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		overflow: hidden;
+		margin-bottom: 24px;
+		font-size: 15px;
+		line-height: 1.5;
+	}
+
+	.prose :global(th),
+	.prose :global(td) {
+		padding: 10px 14px;
+		text-align: left;
+		vertical-align: top;
+		border-bottom: 1px solid var(--border);
+	}
+
+	.prose :global(th) {
+		background: var(--surface);
+		font-weight: 600;
+		white-space: nowrap;
+	}
+
+	.prose :global(tr:last-child td) {
+		border-bottom: none;
+	}
+
+	/* Let long paths like `src/site.config.ts` wrap inside narrow cells */
+	.prose :global(td code) {
+		overflow-wrap: anywhere;
+	}
+
+	@media (max-width: 640px) {
+		.prose :global(table) {
+			font-size: 14px;
+		}
+
+		.prose :global(th),
+		.prose :global(td) {
+			padding: 8px 10px;
+		}
+	}
+
+	.prose :global(img) {
+		max-width: 100%;
+		height: auto;
+		border-radius: 8px;
+	}
+</style>
