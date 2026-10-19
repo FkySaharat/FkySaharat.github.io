@@ -2,6 +2,9 @@
 import { render } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
 import FormattedDate from '../../components/FormattedDate.astro';
+import T from '../../components/T.astro';
+import TableOfContents from '../../components/TableOfContents.astro';
+import { UI } from '../../i18n';
 import { getPublishedPosts } from '../../lib/content';
 import { pageTitle } from '../../site.config';
 
@@ -11,8 +14,10 @@ export async function getStaticPaths() {
 }
 
 const { post } = Astro.props;
-const { Content } = await render(post);
+const { Content, headings } = await render(post);
 const { title, description, pubDate, updatedDate, tags, lang } = post.data;
+// A table of contents only helps when there's something to jump between
+const showToc = headings.filter((h) => h.depth === 2).length >= 3;
 ---
 
 <Layout
@@ -21,7 +26,7 @@ const { title, description, pubDate, updatedDate, tags, lang } = post.data;
 	lang={lang}
 	article={{ publishedTime: pubDate, modifiedTime: updatedDate, tags }}
 >
-	<article>
+	<article lang={lang}>
 		<header>
 			<h1>{title}</h1>
 			<p class="meta">
@@ -29,7 +34,7 @@ const { title, description, pubDate, updatedDate, tags, lang } = post.data;
 				{
 					updatedDate && (
 						<span>
-							· Updated <FormattedDate date={updatedDate} />
+							· <T t={UI.blog.updated} /> <FormattedDate date={updatedDate} />
 						</span>
 					)
 				}
@@ -44,11 +49,30 @@ const { title, description, pubDate, updatedDate, tags, lang } = post.data;
 				)
 			}
 		</header>
-		<div class="prose">
-			<Content />
+		{
+			showToc && (
+				<details class="toc-mobile">
+					<summary id="toc-summary">
+						<T t={UI.blog.onThisPage} />
+					</summary>
+					<TableOfContents headings={headings} labelledBy="toc-summary" />
+				</details>
+			)
+		}
+		<div class="post-body">
+			{
+				showToc && (
+					<aside class="toc-desktop">
+						<TableOfContents headings={headings} titleId="toc-title" />
+					</aside>
+				)
+			}
+			<div class="prose">
+				<Content />
+			</div>
 		</div>
 	</article>
-	<a href="/blog/" class="back">← All posts</a>
+	<a href="/blog/" class="back"><T t={UI.blog.backToAll} /></a>
 </Layout>
 
 <style>
@@ -82,6 +106,66 @@ const { title, description, pubDate, updatedDate, tags, lang } = post.data;
 
 	.back:hover {
 		color: var(--text);
+	}
+
+	/* Table of contents: a collapsible box on narrow screens, a sticky sidebar on wide ones */
+	.toc-mobile {
+		margin-bottom: 32px;
+		padding: 12px 16px;
+		border: 1px solid var(--border);
+		border-radius: 8px;
+	}
+
+	.toc-mobile summary {
+		cursor: pointer;
+		font-size: 14px;
+		font-weight: 600;
+		color: var(--muted);
+	}
+
+	.toc-mobile[open] summary {
+		margin-bottom: 12px;
+	}
+
+	.post-body {
+		position: relative;
+	}
+
+	.toc-desktop {
+		display: none;
+	}
+
+	/*
+	 * Sidebar sits in the empty space LEFT of the 720px content column.
+	 * Needs (viewport - 720) / 2 + 24px padding >= 200px sidebar + 40px gap,
+	 * i.e. a viewport of at least ~1200px.
+	 */
+	@media (min-width: 1200px) {
+		.toc-mobile {
+			display: none;
+		}
+
+		.toc-desktop {
+			display: block;
+			position: absolute;
+			top: 0;
+			bottom: 0;
+			right: calc(100% + 40px);
+			width: 200px;
+		}
+
+		.toc-desktop :global(.toc) {
+			position: sticky;
+			top: 24px;
+			max-height: calc(100vh - 48px);
+			overflow-y: auto;
+		}
+	}
+
+	/* Leave a little space above a heading when jumping to it */
+	.prose :global(h2),
+	.prose :global(h3) {
+		scroll-margin-top: 24px;
 	}
 
 	/* Styles for rendered Markdown (not scoped by Astro, so use :global) */

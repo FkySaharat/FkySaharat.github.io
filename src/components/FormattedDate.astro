@@ -1,11 +1,16 @@
 ---
+import T from './T.astro';
+
 interface Props {
 	date: Date;
 }
 
 const { date } = Astro.props;
+// Dates are stored as UTC midnight, so format in UTC to avoid showing the previous day.
+// Thai uses the Gregorian year (2026, not 2569) to match the rest of the site.
+const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' };
 ---
 
 <time datetime={date.toISOString()}>
-	{date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' })}
+	<T t={{ en: date.toLocaleDateString('en-US', options), th: date.toLocaleDateString('th-TH-u-ca-gregory', options) }} />
 </time>

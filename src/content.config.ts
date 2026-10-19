@@ -1,6 +1,7 @@
 import { defineCollection } from 'astro:content';
 import { glob } from 'astro/loaders';
 import { z } from 'astro/zod';
+import { LOCALES } from './i18n';
 
 // Blog posts: one Markdown file per post in src/content/blog/
 const blog = defineCollection({
@@ -11,8 +12,8 @@ const blog = defineCollection({
 		pubDate: z.coerce.date(),
 		updatedDate: z.coerce.date().optional(),
 		tags: z.array(z.string()).default([]),
-		// Language of the post body, used for <html lang>. Default: English.
-		lang: z.enum(['en', 'th']).default('en'),
+		// Language of the post body (set as lang on the <article>). Default: English.
+		lang: z.enum(LOCALES).default('en'),
 		draft: z.boolean().default(false),
 	}),
 });

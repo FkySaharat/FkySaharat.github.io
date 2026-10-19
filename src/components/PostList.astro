@@ -1,6 +1,8 @@
 ---
 import type { CollectionEntry } from 'astro:content';
 import FormattedDate from './FormattedDate.astro';
+import T from './T.astro';
+import { UI } from '../i18n';
 
 interface Props {
 	posts: CollectionEntry<'blog'>[];
@@ -11,7 +13,7 @@ const { posts } = Astro.props;
 
 {
 	posts.length === 0 ? (
-		<p class="empty">No posts yet.</p>
+		<p class="empty"><T t={UI.blog.empty} /></p>
 	) : (
 		<ul class="posts">
 			{posts.map((post) => (

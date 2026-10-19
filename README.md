@@ -8,7 +8,7 @@ Personal portfolio and blog of a software engineer working with C# and SQL.
 
 ## Tech stack
 
-- **[Astro 7](https://astro.build)**, static output with zero client-side JavaScript
+- **[Astro 7](https://astro.build)**, static output; the only JavaScript is a tiny theme/language toggle
 - **Content collections** with Zod schemas: posts and projects are type-checked Markdown
 - **Plain scoped CSS** with design tokens (CSS variables), no CSS framework
 - **TypeScript** in strict mode, checked by `astro check`
@@ -19,6 +19,7 @@ Personal portfolio and blog of a software engineer working with C# and SQL.
 - Home page with intro, skill cards, project cards, and latest posts
 - Blog with a card-grid index, per-post pages, tags, and draft support
 - SEO basics: per-page title/description, canonical URL, Open Graph tags
+- English / Thai language switch and dark mode (follows the system setting, remembers your choice)
 - Single config file for all personal info (`src/site.config.ts`)
 
 ## Getting started
@@ -64,7 +65,9 @@ Frontmatter is validated against `src/content.config.ts`, so a missing or mistyp
 
 ```text
 ├── .github/workflows/ci.yml   # CI: npm run verify on push / PR
-├── .claude/settings.json      # AI agent permissions (see below)
+├── .claude/
+│   ├── settings.json          # AI agent permissions (see below)
+│   └── skills/new-post/       # Skill: how to write a blog post
 ├── public/                    # Static files served as-is (favicon)
 ├── src/
 │   ├── components/            # Header, Icon, PostList (blog cards), FormattedDate
@@ -89,6 +92,7 @@ This repo is set up so coding agents (Claude Code, Codex, Copilot, …) can work
 - **`AGENTS.md`** covers the project map, conventions, and rules (for example: no hardcoded personal info, no new dependencies without asking). `CLAUDE.md` imports it.
 - **`npm run verify`** is the definition of done: agents must pass it before reporting a task as finished.
 - **`.claude/settings.json`** pre-approves the safe build/check commands and blocks edits to generated folders (`dist/`, `.astro/`, `node_modules/`).
+- **`.claude/skills/new-post/`** is a step-by-step skill for writing blog posts (frontmatter, style, fact rules, verification). It loads only when an agent is writing a post.
 - **CI** runs the same `verify` command, so nothing an agent (or human) breaks can be merged silently.
 
 ## Deployment

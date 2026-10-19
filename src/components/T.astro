@@ -1,0 +1,23 @@
+---
+// Renders text in both languages. CSS in Layout.astro hides the one that isn't active
+// (English when JavaScript is off or no preference is saved). A plain string renders once.
+import type { Label } from '../i18n';
+
+interface Props {
+	t: Label;
+}
+
+const { t } = Astro.props;
+---
+
+{
+	typeof t === 'string' ? (
+		t
+	) : (
+		<>
+			{/* The space keeps the two languages apart where site CSS doesn't apply
+			    (reader mode, search snippets). On the page it collapses away. */}
+			<span data-l="en" lang="en">{t.en}</span> <span data-l="th" lang="th">{t.th}</span>
+		</>
+	)
+}

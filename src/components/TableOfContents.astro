@@ -1,0 +1,82 @@
+---
+// Links to the post's ## and ### headings. Astro gives every Markdown heading an id,
+// so plain #anchor links are enough — no JavaScript needed.
+import type { MarkdownHeading } from 'astro';
+import T from './T.astro';
+import { UI } from '../i18n';
+
+type Props = { headings: MarkdownHeading[] } & (
+	| {
+			/** Show the "On this page" title, and use it as the nav's accessible name. */
+			titleId: string;
+			labelledBy?: never;
+	  }
+	| {
+			/** No title here; name the nav after an element outside it (e.g. a <summary>). */
+			labelledBy: string;
+			titleId?: never;
+	  }
+);
+
+const { headings, titleId, labelledBy } = Astro.props;
+const items = headings.filter((h) => h.depth === 2 || h.depth === 3);
+// aria-labelledby picks up only the visible language of the <T> label, so it matches the UI language
+---
+
+<nav class="toc" aria-labelledby={titleId ?? labelledBy}>
+	{
+		titleId && (
+			<p class="toc-title" id={titleId}>
+				<T t={UI.blog.onThisPage} />
+			</p>
+		)
+	}
+	<ul>
+		{
+			items.map((h) => (
+				<li class:list={[`depth-${h.depth}`]}>
+					<a href={`#${h.slug}`}>{h.text}</a>
+				</li>
+			))
+		}
+	</ul>
+</nav>
+
+<style>
+	.toc-title {
+		font-size: 12px;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		color: var(--muted);
+		margin-bottom: 10px;
+	}
+
+	ul {
+		list-style: none;
+		display: grid;
+		gap: 2px;
+		border-left: 1px solid var(--border);
+	}
+
+	a {
+		display: block;
+		padding: 4px 0 4px 12px;
+		margin-left: -1px;
+		border-left: 2px solid transparent;
+		font-size: 14px;
+		line-height: 1.45;
+		color: var(--muted);
+		text-decoration: none;
+	}
+
+	a:hover {
+		color: var(--text);
+		border-left-color: var(--accent);
+	}
+
+	.depth-3 a {
+		padding-left: 24px;
+		font-size: 13px;
+	}
+</style>

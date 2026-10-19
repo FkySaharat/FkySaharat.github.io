@@ -2,6 +2,8 @@
 import Layout from '../layouts/Layout.astro';
 import Icon from '../components/Icon.astro';
 import PostList from '../components/PostList.astro';
+import T from '../components/T.astro';
+import { UI } from '../i18n';
 import { getPublishedPosts, getPublishedProjects } from '../lib/content';
 import { EDUCATION, EXPERIENCE, LANGUAGES, SITE, SKILLS, SOCIAL_LINKS } from '../site.config';
 
@@ -11,16 +13,13 @@ const latestPosts = (await getPublishedPosts()).slice(0, 3);
 
 <Layout>
 	<section class="hero">
-		<h1>
-			{SITE.name}
-			<span class="name-th" lang="th">{SITE.nameTh}</span>
-		</h1>
+		<h1><T t={{ en: SITE.name, th: SITE.nameTh }} /></h1>
 		<p class="role">{SITE.role}</p>
 		<p class="location">
 			<Icon name="mapPin" size={16} />
-			{SITE.location}
+			<T t={SITE.location} />
 		</p>
-		<p class="description">{SITE.bio}</p>
+		<p class="description"><T t={SITE.bio} /></p>
 		<div class="links">
 			{
 				SOCIAL_LINKS.map((link) => {
@@ -33,7 +32,7 @@ const latestPosts = (await getPublishedPosts()).slice(0, 3);
 							rel={external ? 'noopener noreferrer' : undefined}
 						>
 							<Icon name={link.icon} />
-							{link.label}
+							<T t={link.label} />
 						</a>
 					);
 				})
@@ -42,7 +41,7 @@ const latestPosts = (await getPublishedPosts()).slice(0, 3);
 	</section>
 
 	<section>
-		<h2>Experience</h2>
+		<h2><T t={UI.home.experience} /></h2>
 		<ol class="timeline">
 			{
 				EXPERIENCE.map((job) => (
@@ -51,15 +50,15 @@ const latestPosts = (await getPublishedPosts()).slice(0, 3);
 							<div>
 								<h3>{job.role}</h3>
 								<p class="company">
-									{job.company} · {job.type}
+									{job.company} · <T t={job.type} />
 								</p>
 							</div>
-							<p class="period">{job.period}</p>
+							<p class="period"><T t={job.period} /></p>
 						</div>
-						<p class="job-summary">{job.summary}</p>
+						<p class="job-summary"><T t={job.summary} /></p>
 						<ul class="highlights">
 							{job.highlights.map((item) => (
-								<li>{item}</li>
+								<li><T t={item} /></li>
 							))}
 						</ul>
 					</li>
@@ -69,7 +68,7 @@ const latestPosts = (await getPublishedPosts()).slice(0, 3);
 	</section>
 
 	<section>
-		<h2>Skills</h2>
+		<h2><T t={UI.home.skills} /></h2>
 		<div class="skills">
 			{
 				SKILLS.map((skill) => (
@@ -77,7 +76,7 @@ const latestPosts = (await getPublishedPosts()).slice(0, 3);
 						<span class="skill-icon">
 							<Icon name={skill.icon} />
 						</span>
-						<h3>{skill.title}</h3>
+						<h3><T t={skill.title} /></h3>
 						<ul class="tag-list">
 							{skill.items.map((item) => (
 								<li>{item}</li>
@@ -91,31 +90,31 @@ const latestPosts = (await getPublishedPosts()).slice(0, 3);
 
 	<section class="split">
 		<div>
-			<h2>Education</h2>
+			<h2><T t={UI.home.education} /></h2>
 			{
 				EDUCATION.map((edu) => (
 					<div class="card edu">
 						<span class="skill-icon">
 							<Icon name="graduationCap" />
 						</span>
-						<h3>{edu.school}</h3>
-						<p>{edu.degree}</p>
+						<h3><T t={edu.school} /></h3>
+						<p><T t={edu.degree} /></p>
 						<p class="muted">{edu.program}</p>
 						<p class="muted">
-							{edu.period} · GPA {edu.gpa}
+							{edu.period} · <T t={UI.home.gpa} /> {edu.gpa}
 						</p>
 					</div>
 				))
 			}
 		</div>
 		<div>
-			<h2>Languages</h2>
+			<h2><T t={UI.home.languages} /></h2>
 			<ul class="card languages">
 				{
 					LANGUAGES.map((lang) => (
 						<li>
-							<span>{lang.name}</span>
-							<span class="muted">{lang.level}</span>
+							<span><T t={lang.name} /></span>
+							<span class="muted"><T t={lang.level} /></span>
 						</li>
 					))
 				}
@@ -126,7 +125,7 @@ const latestPosts = (await getPublishedPosts()).slice(0, 3);
 	{
 		projects.length > 0 && (
 			<section>
-				<h2>Projects</h2>
+				<h2><T t={UI.home.projects} /></h2>
 				<div class="projects">
 					{projects.map(({ data }) => (
 						<article class="card project">
@@ -136,12 +135,12 @@ const latestPosts = (await getPublishedPosts()).slice(0, 3);
 							<div class="project-links">
 								{data.repo && (
 									<a href={data.repo} target="_blank" rel="noopener noreferrer">
-										Code →
+										<T t={UI.home.code} />
 									</a>
 								)}
 								{data.demo && (
 									<a href={data.demo} target="_blank" rel="noopener noreferrer">
-										Live demo →
+										<T t={UI.home.demo} />
 									</a>
 								)}
 							</div>
@@ -154,8 +153,8 @@ const latestPosts = (await getPublishedPosts()).slice(0, 3);
 
 	<section>
 		<div class="section-head">
-			<h2>Latest posts</h2>
-			<a href="/blog/">All posts →</a>
+			<h2><T t={UI.home.latestPosts} /></h2>
+			<a href="/blog/"><T t={UI.home.allPosts} /></a>
 		</div>
 		<PostList posts={latestPosts} />
 	</section>
@@ -163,28 +162,36 @@ const latestPosts = (await getPublishedPosts()).slice(0, 3);
 
 <style>
 	section {
-		margin-bottom: 72px;
+		margin-bottom: 56px;
 	}
 
 	h1 {
-		font-size: 48px;
+		font-size: 44px;
 		font-weight: 700;
-		margin-bottom: 16px;
+		margin-bottom: 8px;
 		letter-spacing: -0.02em;
 	}
 
-	h2 {
-		font-size: 24px;
-		letter-spacing: -0.01em;
-		margin-bottom: 24px;
+	/* Resume-style section headings: small caps label with a rule underneath */
+	h2,
+	.section-head {
+		padding-bottom: 10px;
+		border-bottom: 1px solid var(--border);
+		margin-bottom: 20px;
 	}
 
-	.name-th {
-		display: inline-block;
-		font-size: 20px;
-		font-weight: 500;
+	h2 {
+		font-size: 13px;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
 		color: var(--muted);
-		letter-spacing: 0;
+	}
+
+	.section-head h2 {
+		padding-bottom: 0;
+		border-bottom: none;
+		margin-bottom: 0;
 	}
 
 	.role {
@@ -315,7 +322,7 @@ const latestPosts = (await getPublishedPosts()).slice(0, 3);
 
 	.btn-primary {
 		background-color: var(--accent);
-		color: var(--bg);
+		color: var(--on-accent);
 	}
 
 	.btn-primary:hover {

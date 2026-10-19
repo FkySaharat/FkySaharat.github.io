@@ -1,29 +1,96 @@
 ---
+import Icon from './Icon.astro';
+import T from './T.astro';
+import { UI } from '../i18n';
 import { SITE } from '../site.config';
 
 const path = Astro.url.pathname;
 const links = [
-	{ href: '/', label: 'Home', active: path === '/' },
-	{ href: '/blog/', label: 'Blog', active: path === '/blog' || path.startsWith('/blog/') },
+	{ href: '/', label: UI.nav.home, active: path === '/' },
+	{ href: '/blog/', label: UI.nav.blog, active: path === '/blog' || path.startsWith('/blog/') },
 ];
 ---
 
 <header>
 	<nav>
 		<a href="/" class="brand">{SITE.name}</a>
-		<ul>
-			{
-				links.map((link) => (
-					<li>
-						<a href={link.href} class:list={{ active: link.active }} aria-current={link.active ? 'page' : undefined}>
-							{link.label}
-						</a>
-					</li>
-				))
-			}
-		</ul>
+		<div class="right">
+			<ul>
+				{
+					links.map((link) => (
+						<li>
+							<a href={link.href} class:list={{ active: link.active }} aria-current={link.active ? 'page' : undefined}>
+								<T t={link.label} />
+							</a>
+						</li>
+					))
+				}
+			</ul>
+			<div class="toggles">
+				<!--
+					Segmented switch: both languages visible, the active one highlighted.
+					Accessible names start in English; the script below swaps them to match the UI language.
+				-->
+				<button
+					type="button"
+					class="lang-switch"
+					data-toggle="lang"
+					data-label-en={UI.toggles.lang.en}
+					data-label-th={UI.toggles.lang.th}
+					aria-label={UI.toggles.lang.en}
+					title={UI.toggles.lang.en}
+				>
+					<span class="seg seg-en" lang="en" aria-hidden="true">EN</span>
+					<span class="seg seg-th" lang="th" aria-hidden="true">TH</span>
+				</button>
+				<button
+					type="button"
+					class="theme-toggle"
+					data-toggle="theme"
+					data-label-en={UI.toggles.theme.en}
+					data-label-th={UI.toggles.theme.th}
+					aria-label={UI.toggles.theme.en}
+					aria-pressed="false"
+					title={UI.toggles.theme.en}
+				>
+					<span class="icon-moon"><Icon name="moon" size={16} /></span>
+					<span class="icon-sun"><Icon name="sun" size={16} /></span>
+				</button>
+			</div>
+		</div>
 	</nav>
 </header>
+
+<script>
+	// Preferences are applied in one place: the inline script in Layout.astro. These buttons only
+	// ask it to change a value, then update their own labels whenever it fires `prefs-change`.
+	const root = document.documentElement;
+	const setPref = (key: 'theme' | 'lang', value: string) =>
+		(window as Window & { __setPref?: (key: string, value: string) => void }).__setPref?.(key, value);
+
+	const themeButton = document.querySelector<HTMLButtonElement>('[data-toggle="theme"]');
+	const langButton = document.querySelector<HTMLButtonElement>('[data-toggle="lang"]');
+
+	/** Keep each button's accessible name in the UI language, and expose the theme state. */
+	function syncButtons() {
+		const lang = root.dataset.lang === 'th' ? 'th' : 'en';
+		for (const button of [themeButton, langButton]) {
+			const label = button?.dataset[lang === 'th' ? 'labelTh' : 'labelEn'];
+			if (button && label) {
+				button.setAttribute('aria-label', label);
+				button.title = label;
+			}
+		}
+		themeButton?.setAttribute('aria-pressed', String(root.dataset.theme === 'dark'));
+	}
+
+	themeButton?.addEventListener('click', () => setPref('theme', root.dataset.theme === 'dark' ? 'light' : 'dark'));
+	langButton?.addEventListener('click', () => setPref('lang', root.dataset.lang === 'th' ? 'en' : 'th'));
+
+	document.addEventListener('prefs-change', syncButtons);
+	// The first `prefs-change` fired before this module loaded, so sync once now
+	syncButtons();
+</script>
 
 <style>
 	header {
@@ -33,10 +100,11 @@ const links = [
 	nav {
 		max-width: 720px;
 		margin: 0 auto;
-		padding: 20px 24px;
+		padding: 16px 24px;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
+		gap: 16px;
 	}
 
 	.brand {
@@ -45,9 +113,15 @@ const links = [
 		text-decoration: none;
 	}
 
+	.right {
+		display: flex;
+		align-items: center;
+		gap: 20px;
+	}
+
 	ul {
 		display: flex;
-		gap: 24px;
+		gap: 20px;
 		list-style: none;
 	}
 
@@ -61,5 +135,99 @@ const links = [
 	ul a:hover,
 	ul a.active {
 		color: var(--text);
+	}
+
+	.toggles {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+
+	/* The toggles only work with JavaScript, so hide them until the inline script marks data-js */
+	:global(html:not([data-js])) .toggles {
+		display: none;
+	}
+
+	/* Shared look for both controls: small pills with a thin border */
+	.lang-switch,
+	.theme-toggle {
+		display: inline-flex;
+		align-items: center;
+		height: 32px;
+		border: 1px solid var(--border);
+		border-radius: 999px;
+		background: transparent;
+		color: var(--muted);
+		font: inherit;
+		cursor: pointer;
+		transition:
+			border-color 0.15s,
+			color 0.15s;
+	}
+
+	.lang-switch:hover,
+	.theme-toggle:hover {
+		border-color: var(--border-hover);
+		color: var(--text);
+	}
+
+	.lang-switch:focus-visible,
+	.theme-toggle:focus-visible {
+		outline: 2px solid var(--accent);
+		outline-offset: 2px;
+	}
+
+	.lang-switch {
+		padding: 2px;
+		gap: 2px;
+	}
+
+	.seg {
+		padding: 4px 10px;
+		border-radius: 999px;
+		font-size: 12px;
+		font-weight: 600;
+		letter-spacing: 0.04em;
+		line-height: 1.4;
+		transition:
+			background-color 0.15s,
+			color 0.15s;
+	}
+
+	/* Highlight the active language (English unless Thai is chosen) */
+	:global(html:not([data-lang='th'])) .seg-en,
+	:global(html[data-lang='th']) .seg-th {
+		background: var(--surface-hover);
+		color: var(--text);
+	}
+
+	.theme-toggle {
+		justify-content: center;
+		width: 32px;
+	}
+
+	/* Theme icon: moon in light mode, sun in dark mode */
+	.icon-sun {
+		display: none;
+	}
+
+	:global(:root[data-theme='dark']) .icon-sun {
+		display: inline-flex;
+	}
+
+	:global(:root[data-theme='dark']) .icon-moon {
+		display: none;
+	}
+
+
+	@media (max-width: 480px) {
+		.brand {
+			font-size: 15px;
+		}
+
+		.right,
+		ul {
+			gap: 12px;
+		}
 	}
 </style>

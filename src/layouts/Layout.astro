@@ -1,12 +1,17 @@
 ---
 import Header from '../components/Header.astro';
+import T from '../components/T.astro';
+import type { Locale } from '../i18n';
 import { SITE, pageTitle } from '../site.config';
 
 interface Props {
 	title?: string;
 	description?: string;
-	/** Page language for <html lang>. */
-	lang?: 'en' | 'th';
+	/**
+	 * Language of the page's own content (e.g. a Thai post). It's the <html lang> that crawlers and
+	 * no-JS visitors see. Once a visitor picks a UI language, <html lang> follows that choice.
+	 */
+	lang?: Locale;
 	/** Blog posts pass these to get Open Graph article metadata. */
 	article?: { publishedTime: Date; modifiedTime?: Date; tags?: string[] };
 }
@@ -16,7 +21,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 ---
 
 <!doctype html>
-<html lang={lang}>
+<html lang={lang} data-default-lang={lang}>
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -41,13 +46,77 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 				</>
 			)
 		}
+		<!--
+			The single place that applies theme + language preferences. Runs before first paint
+			(no flash) and re-runs whenever they could change:
+			- a toggle button is clicked (Header.astro calls window.__setPref)
+			- another tab changes them (storage event)
+			- the page comes back from the back/forward cache (pageshow)
+			- the system theme changes and the visitor hasn't picked one
+			After each run it fires a `prefs-change` event so the buttons can update their labels.
+			Inline scripts can't import, so the 'en' / 'th' values mirror LOCALES in src/i18n.ts.
+		-->
+		<script is:inline>
+			(() => {
+				const root = document.documentElement;
+				const system = window.matchMedia('(prefers-color-scheme: dark)');
+				// Used when localStorage is blocked (e.g. some private modes), so toggles still work for this page
+				const memory = {};
+
+				const read = (key) => {
+					if (key in memory) return memory[key];
+					try {
+						return localStorage.getItem(key);
+					} catch {
+						return null;
+					}
+				};
+
+				function apply() {
+					const theme = read('theme');
+					const lang = read('lang');
+					root.dataset.theme = theme === 'light' || theme === 'dark' ? theme : system.matches ? 'dark' : 'light';
+					if (lang === 'en' || lang === 'th') {
+						root.dataset.lang = lang;
+						root.lang = lang;
+					} else {
+						delete root.dataset.lang;
+						root.lang = root.dataset.defaultLang || 'en';
+					}
+					document.dispatchEvent(new Event('prefs-change'));
+				}
+
+				window.__setPref = (key, value) => {
+					memory[key] = value;
+					try {
+						localStorage.setItem(key, value);
+					} catch {}
+					apply();
+				};
+
+				root.dataset.js = '';
+				apply();
+				system.addEventListener('change', apply);
+				window.addEventListener('pageshow', (e) => e.persisted && apply());
+				window.addEventListener('storage', (e) => {
+					if (e.key !== 'theme' && e.key !== 'lang' && e.key !== null) return;
+					// Another tab changed it: its value wins over anything kept in memory here
+					if (e.key === null) for (const k in memory) delete memory[k];
+					else delete memory[e.key];
+					apply();
+				});
+			})();
+		</script>
 	</head>
 	<body>
 		<Header />
 		<main>
 			<slot />
 		</main>
-		<footer>© {new Date().getFullYear()} {SITE.name}</footer>
+		<footer>
+			<span>© {new Date().getFullYear()} {SITE.name}</span>
+			<span><T t={SITE.location} /> · <a href={`mailto:${SITE.email}`}>{SITE.email}</a></span>
+		</footer>
 	</body>
 </html>
 
@@ -61,9 +130,45 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 		--bg: #ffffff;
 		--surface: #f5f5f5;
 		--surface-hover: #e8e8e8;
-		--accent: #0a66c2;
-		--accent-hover: #084fa0;
+		--accent: #1f4e8c;
+		--accent-hover: #173c6b;
+		--on-accent: #ffffff;
 		--shadow: rgba(0, 0, 0, 0.06);
+		color-scheme: light;
+	}
+
+	/*
+	 * Dark theme. The inline script in <head> sets data-theme from the saved choice or the system
+	 * setting, so this is the only dark block. Without JS the site stays light.
+	 */
+	:root[data-theme='dark'] {
+		--text: #e6e8eb;
+		--text-secondary: #b8bdc4;
+		--muted: #9aa1a9;
+		--border: #2a2f36;
+		--border-hover: #3d444d;
+		--bg: #0f1216;
+		--surface: #1a1f25;
+		--surface-hover: #252b33;
+		--accent: #7aa7e6;
+		--accent-hover: #9cbdf0;
+		--on-accent: #0f1216;
+		--shadow: rgba(0, 0, 0, 0.4);
+		color-scheme: dark;
+	}
+
+	/*
+	 * Thai script must never be letter-spaced: tight tracking (headings) squeezes vowels and tone marks,
+	 * and wide tracking (uppercase labels) breaks up syllables. !important beats the scoped heading rules.
+	 */
+	:lang(th) {
+		letter-spacing: 0 !important;
+	}
+
+	/* Language switch: <T> renders both languages; show only the active one (English by default) */
+	html:not([data-lang='th']) [data-l='th'],
+	html[data-lang='th'] [data-l='en'] {
+		display: none !important;
 	}
 
 	* {
@@ -76,10 +181,19 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 	body {
 		width: 100%;
 		min-height: 100%;
-		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+		/* System fonts, with Thai fallbacks so Thai text doesn't fall back to a random font */
+		font-family:
+			-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans Thai', 'Leelawadee UI', Tahoma, sans-serif;
 		background-color: var(--bg);
 		color: var(--text);
 		line-height: 1.6;
+	}
+
+	/* Smooth jumps to #anchors (e.g. the blog table of contents), unless the user prefers less motion */
+	@media (prefers-reduced-motion: no-preference) {
+		html {
+			scroll-behavior: smooth;
+		}
 	}
 
 	main {
@@ -99,14 +213,12 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 		text-decoration: none;
 		transition:
 			border-color 0.2s,
-			box-shadow 0.2s,
-			transform 0.2s;
+			box-shadow 0.2s;
 	}
 
 	a.card:hover {
 		border-color: var(--border-hover);
-		box-shadow: 0 6px 20px var(--shadow);
-		transform: translateY(-2px);
+		box-shadow: 0 4px 14px var(--shadow);
 	}
 
 	.tag-list {
@@ -131,6 +243,14 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 		border-top: 1px solid var(--border);
 		font-size: 14px;
 		color: var(--muted);
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		gap: 8px 24px;
+	}
+
+	footer a {
+		color: inherit;
 	}
 
 	@media (max-width: 640px) {
